@@ -15,7 +15,9 @@ async def handler(websocket, path):
     finally:
         clients.remove(websocket)
 
-start_server = websockets.serve(handler, "0.0.0.0", PORT)
+async def main():
+    async with websockets.serve(handler, "0.0.0.0", PORT):
+        print(f"Relay server running on port {PORT}")
+        await asyncio.Future()  # futás végtelen ideig
 
-asyncio.get_event_loop().run_until_complete(start_server)
-asyncio.get_event_loop().run_forever()
+asyncio.run(main())
