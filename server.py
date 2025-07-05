@@ -1,28 +1,23 @@
 import os
-import asyncio
-import websockets
+import uvicorn
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
-connected = set()
+app = FastAPI()
+connected_clients = []
 
-async def handler(websocket, path):
-    # Új kliens csatlakozott
-    connected.add(websocket)
+@app.websocket("/")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    connected_clients.append(websocket)
     try:
-        async for message in websocket:
-            # Amikor üzenet érkezik, továbbítjuk minden más kliensnek
-            for conn in connected:
-                if conn != websocket:
-                    await conn.send(message)
-    except websockets.exceptions.ConnectionClosed:
-        pass
-    finally:
-        connected.remove(websocket)
-
-async def main():
-    PORT = int(os.environ.get("PORT", 8080))
-    async with websockets.serve(handler, "0.0.0.0", PORT):
-        print(f"Relay server running on port {PORT}")
-        await asyncio.Future()  # fut örökké
+        while True:
+            data = await websocket.receive_text()
+            for client in connected_clients:
+                if client != websocket:
+                    await client.send_text(data)
+    except WebSocketDisconnect:
+        connected_clients.remove(websocket)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("server:app", host="0.0.0.0", port=port)
