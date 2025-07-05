@@ -1,6 +1,15 @@
 {
-  "build": [
-    "pip install -r requirements.txt"
-  ],
-  "start": "python server.py"
+  "build": {
+    "builder": "NIXPACKS",
+    "nixpacksPlan": {
+      "phases": {
+        "install": {
+          "cmds": ["pip install -r requirements.txt"]
+        },
+        "start": {
+          "cmds": ["python server.py"]
+        }
+      }
+    }
+  }
 }
