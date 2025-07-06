@@ -1,23 +1,24 @@
 import os
-import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+import uvicorn
 
 app = FastAPI()
-connected_clients = []
+clients = []
 
-@app.websocket("/")
-async def websocket_endpoint(websocket: WebSocket):
+@app.websocket("/")  # A RELAY_URL-nek ehhez kell igazodnia
+async def relay(websocket: WebSocket):
     await websocket.accept()
-    connected_clients.append(websocket)
+    clients.append(websocket)
     try:
         while True:
             data = await websocket.receive_text()
-            for client in connected_clients:
+            # Az összes többi kliensnek továbbküldjük
+            for client in clients:
                 if client != websocket:
                     await client.send_text(data)
     except WebSocketDisconnect:
-        connected_clients.remove(websocket)
+        clients.remove(websocket)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run("server:app", host="0.0.0.0", port=port)
